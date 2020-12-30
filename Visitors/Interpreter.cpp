@@ -1,5 +1,10 @@
 #include "Interpreter.h"
 
+
+
+
+//---------------------------------------------- Expressions ----------------------------------------------//
+
 Interpreter::Interpreter(const std::vector<VarDeclList*>& var_declarations) {
     for (const auto& var_decl_list : var_declarations) {
         for (const auto &var_name : var_decl_list->var_names) {
@@ -64,6 +69,11 @@ var_t Interpreter::Visit(ConstExpr *expression) {
     return expression->value;
 }
 
+
+
+
+//---------------------------------------------- Executable modules ----------------------------------------------//
+
 void Interpreter::Visit(Assignment* assignment) {
     auto res = assignment->expression->Accept(*this);
     CheckOperationCorrectness("=", true, var_value[assignment->var_name_], res);
@@ -93,18 +103,6 @@ void Interpreter::Visit(While* while_cycle) {
     }
 }
 
-void Interpreter::Visit(Read* read_module) {
-    std::string buffer;
-    std::cin >> buffer;
-    std::pair<int, std::string> type;
-    GetType(type, var_value[read_module->var_name]);
-    if (type.first == integer) {
-        var_value[read_module->var_name] = std::stoi(buffer);
-    } else if (type.first == string) {
-        var_value[read_module->var_name] = std::move(buffer);
-    }
-}
-
 void Interpreter::Visit(For* for_cycle) {
     auto lower_res = for_cycle->lower_bound->Accept(*this);
     auto upper_res = for_cycle->upper_bound->Accept(*this);
@@ -118,66 +116,15 @@ void Interpreter::Visit(For* for_cycle) {
     }
 }
 
-//---------------------------------------------- Logic operators ----------------------------------------------//
-
-var_t Interpreter::Visit(LessExpr *expression) {
-    auto l_res = expression->p_lhs->Accept(*this);
-    auto r_res = expression->p_rhs->Accept(*this);
-    CheckOperationCorrectness("<", true, l_res, r_res);
-    return std::get<int>(l_res) < std::get<int>(r_res);
-}
-
-var_t Interpreter::Visit(GreaterExpr *expression) {
-    auto l_res = expression->p_lhs->Accept(*this);
-    auto r_res = expression->p_rhs->Accept(*this);
-    CheckOperationCorrectness(">", true, l_res, r_res);
-    return std::get<int>(l_res) > std::get<int>(r_res);
-}
-
-
-
-
-
-
-
-void Interpreter::CheckOperationCorrectness(const std::string &operation, bool only_for_numbers,
-                                            const var_t &first_val, const var_t &second_val) {
-    if (first_val.index() == second_val.index() && !only_for_numbers) {
-        return;
-    } else if (first_val.index() == second_val.index() && first_val.index() == 0) {
-        return;
-    }
-    std::pair<int, std::string> first_type, second_type;
-    GetType(first_type, first_val);
-    GetType(second_type, second_val);
-    throw WrongBinaryOperandsError("+", first_type.second, second_type.second);
-}
-
-void Interpreter::CheckBoolCorrectness(const var_t &val) {
-    if (val.index() != 0) {
-        std::pair<int, std::string> type;
-        GetType(type, val);
-        throw ExpectedBoolError(type.second);
-    }
-}
-
-void Interpreter::GetType(std::pair<int, std::string>& type, const var_t &val) {
-    switch (val.index()) {
-        case 0: {
-            type.second = "integer";
-            type.first = integer;
-            break;
-        }
-        case 1: {
-            type.second = "string";
-            type.first = string;
-            break;
-        }
-        default: {
-            type.second = "unknown type";
-            type.first = unknown;
-            break;
-        }
+void Interpreter::Visit(Read* read_module) {
+    std::string buffer;
+    std::cin >> buffer;
+    std::pair<int, std::string> type;
+    GetType(type, var_value[read_module->var_name]);
+    if (type.first == integer) {
+        var_value[read_module->var_name] = std::stoi(buffer);
+    } else if (type.first == string) {
+        var_value[read_module->var_name] = std::move(buffer);
     }
 }
 
@@ -195,17 +142,29 @@ void Interpreter::Visit(Write *write_module) {
             break;
         }
         default: {
-            std::cout << "<unknown type>\n";
+            std::cout << "<unknown type>" << '\n';
         }
     }
 }
 
-void Interpreter::CheckIntCorrectness(const var_t &val) {
-    std::pair<int, std::string> type;
-    GetType(type, val);
-    if (type.first != integer) {
-        throw ExpectedIntError(type.second);
-    }
+
+
+
+
+//---------------------------------------------- Logic operators ----------------------------------------------//
+
+var_t Interpreter::Visit(LessExpr *expression) {
+    auto l_res = expression->p_lhs->Accept(*this);
+    auto r_res = expression->p_rhs->Accept(*this);
+    CheckOperationCorrectness("<", true, l_res, r_res);
+    return std::get<int>(l_res) < std::get<int>(r_res);
+}
+
+var_t Interpreter::Visit(GreaterExpr *expression) {
+    auto l_res = expression->p_lhs->Accept(*this);
+    auto r_res = expression->p_rhs->Accept(*this);
+    CheckOperationCorrectness(">", true, l_res, r_res);
+    return std::get<int>(l_res) > std::get<int>(r_res);
 }
 
 var_t Interpreter::Visit(LeqExpr *expression) {
@@ -254,6 +213,60 @@ var_t Interpreter::Visit(NotExpr *expression) {
     auto res = expression->p_expr->Accept(*this);
     CheckBoolCorrectness(res);
     return !std::get<int>(res);
+}
+
+
+
+
+
+//---------------------------------------------- Subsidiary methods for errors detecting  ----------------------------------------------//
+
+void Interpreter::CheckOperationCorrectness(const std::string &operation, bool only_for_numbers,
+                                            const var_t &first_val, const var_t &second_val) {
+    if ((first_val.index() == second_val.index() && !only_for_numbers) ||
+        (first_val.index() == second_val.index() && first_val.index() == 0)) {
+        return;
+    }
+    std::pair<int, std::string> first_type, second_type;
+    GetType(first_type, first_val);
+    GetType(second_type, second_val);
+    throw WrongBinaryOperandsError(operation, first_type.second, second_type.second);
+}
+
+void Interpreter::CheckBoolCorrectness(const var_t &val) {
+    if (val.index() != 0) {
+        std::pair<int, std::string> type;
+        GetType(type, val);
+        throw ExpectedBoolError(type.second);
+    }
+}
+
+void Interpreter::CheckIntCorrectness(const var_t &val) {
+    std::pair<int, std::string> type;
+    GetType(type, val);
+    if (type.first != integer) {
+        throw ExpectedIntError(type.second);
+    }
+}
+
+void Interpreter::GetType(std::pair<int, std::string>& type, const var_t &val) {
+    switch (val.index()) {
+        case 0: {
+            type.second = "integer";
+            type.first = integer;
+            break;
+        }
+        case 1: {
+            type.second = "string";
+            type.first = string;
+            break;
+        }
+        default: {
+            type.second = "unknown type";
+            type.first = unknown;
+            break;
+        }
+    }
 }
 
 

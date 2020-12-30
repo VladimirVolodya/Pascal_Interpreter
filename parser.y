@@ -105,7 +105,7 @@
     LPAREN "("
     RPAREN ")"
     BEGIN "begin"
-    END "rend"
+    END "end"
     COMMA ","
     SEMICOLON ";"
     DOT "."
@@ -160,8 +160,8 @@
 %start unit;
 unit: program { driver.program = $1; };
 
-program: "program" "identifier" ";" "var" var_declarations "begin" exec_code "rend" "." { $$ = new Program($2, $5, $7); }
-	| "program" "identifier" ";" "begin" exec_code "rend" "." { $$ = new Program($2, {}, $5); };
+program: "program" "identifier" ";" "var" var_declarations "begin" exec_code "end" "." { $$ = new Program($2, $5, $7); }
+	| "program" "identifier" ";" "begin" exec_code "end" "." { $$ = new Program($2, {}, $5); };
 
 var_declarations: var_decl_list {
 		std::vector<VarDeclList*> declarations;
@@ -226,7 +226,7 @@ if: "if" expr "then" line_or_code ";" {
 line_or_code: exec_block {
 		$$ = new ExecCode($1);
 	}
-	| "begin" exec_code "rend" {
+	| "begin" exec_code "end" {
 		$$ = $2;
 	};
 

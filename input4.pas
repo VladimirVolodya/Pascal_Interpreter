@@ -5,7 +5,7 @@ str1: string;
 
 begin
 
-	write('Hello world!');
+	write('Hello, world!');
 	write('Lets calculate a factorial!');
 	write('Enter the integer number:');
 	
@@ -16,7 +16,7 @@ begin
 	if (x < 2) then
 	    begin
 		    write(1);
-		    write('The result was calculated in the false branch.');
+		    write('The result was calculated in the true branch.');
 		end
 	else begin
 		result := 1;
@@ -29,7 +29,7 @@ begin
 		write('The result was calculated in the false branch.');
 	end;
 	
-	write('Now enter a string to test how interpreter deals with it.');
+	write('Now enter a string to test how interpreter deals with it:');
 	read(str1);
 
 	write('Interpreter can only read and print strings, thus, it will remind you of what you have just wrote:');
