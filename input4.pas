@@ -7,7 +7,7 @@ begin
 
 	write('Hello, world!');
 	write('Lets calculate a factorial!');
-	write('Enter the integer number:');
+	write('Enter an integer number:');
 	
 	read(x);
 	
